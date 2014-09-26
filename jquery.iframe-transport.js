@@ -202,23 +202,14 @@
             // actual payload is embedded in a `<textarea>` element, and
             // prepares the required conversions to be made in that case.
             iframe.one("load", function() {
-              var doc = this.contentWindow ? this.contentWindow.document :
-                (this.contentDocument ? this.contentDocument : this.document),
-                root = doc.documentElement ? doc.documentElement : doc.body,
-                textarea = root.getElementsByTagName("textarea")[0],
-                type = textarea && textarea.getAttribute("data-type") || null,
-                status = textarea && textarea.getAttribute("data-status") || 200,
-                statusText = textarea && textarea.getAttribute("data-statusText") || "OK",
-                content = {
-                  html: root.innerHTML,
-                  text: type ?
-                    textarea.value :
-                    root ? (root.textContent || root.innerText) : null
-                };
-              cleanUp();
-              completeCallback(status, statusText, content, type ?
-                ("Content-Type: " + type) :
-                null);
+              $(window).one('message', function (e) {
+                var message = JSON.stringify(e.originalEvent.data);
+
+                console.log('message', message);
+                completeCallback(200, 'OK', {html:message, text:message}, 'Content-Type: application/json');
+              });
+
+              form[0].submit();
             });
 
             // Now that the load handler has been set up, submit the form.
