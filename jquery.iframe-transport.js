@@ -204,12 +204,8 @@
             iframe.one("load", function() {
               $(window).one('message', function (e) {
                 var message = JSON.stringify(e.originalEvent.data);
-
-                console.log('message', message);
                 completeCallback(200, 'OK', {html:message, text:message}, 'Content-Type: application/json');
               });
-
-              form[0].submit();
             });
 
             // Now that the load handler has been set up, submit the form.
