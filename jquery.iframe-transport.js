@@ -112,6 +112,8 @@
         markers = null,
         accepts = null;
 
+    var callbackHandler = null;
+
     // This function gets called after a successful submission or an abortion
     // and should revert all changes made to the page to enable the
     // submission via this transport.
@@ -190,6 +192,7 @@
         // The `send` function is called by jQuery when the request should be
         // sent.
         send: function(headers, completeCallback) {
+
           iframe = $("<iframe src='javascript:false;' name='" + name +
             "' id='" + name + "' style='display:none'></iframe>");
 
@@ -197,15 +200,14 @@
           // into the DOM, and is used to prepare the actual submission.
           iframe.one("load", function() {
 
-            // The second load event gets fired when the response to the form
-            // submission is received. The implementation detects whether the
+            // Register event handler before submitting the form to avoid
+            // race condition. The implementation detects whether the
             // actual payload is embedded in a `<textarea>` element, and
             // prepares the required conversions to be made in that case.
-            iframe.one("load", function() {
-              $(window).one('message', function (e) {
-                var message = JSON.stringify(e.originalEvent.data);
-                completeCallback(200, 'OK', {html:message, text:message}, 'Content-Type: application/json');
-              });
+            $(window).one('message', callbackHandler = function (e) {
+              var message = JSON.stringify(e.originalEvent.data);
+              completeCallback(200, 'OK', {html:message, text:message}, 'Content-Type: application/json');
+              callbackHandler = null;
             });
 
             // Now that the load handler has been set up, submit the form.
@@ -224,6 +226,10 @@
           if (iframe !== null) {
             iframe.unbind("load").attr("src", "javascript:false;");
             cleanUp();
+          }
+          if (callbackHandler !== null) {
+            $(window).off('message', callbackHandler);
+            callbackHandler = null;
           }
         }
 
